@@ -27,12 +27,52 @@ class _ExpensesState extends State<Expenses> {
   void _openAddExpenseOverlay() {
     showModalBottomSheet(
       context: context,
-      builder: (ctx) => NewExpense(),
+      isScrollControlled: true,
+      builder: (ctx) => NewExpense(
+        onAddExpense: addExpense,
+      ),
+    );
+  }
+
+  void addExpense(Expense expense) {
+    setState(() {
+      _registereExpenses.add(expense);
+    });
+  }
+
+  void removeExpense(Expense expense) {
+    final expenseIndex = _registereExpenses.indexOf(expense);
+    setState(() {
+      _registereExpenses.remove(expense);
+    });
+    ScaffoldMessenger.of(context).clearSnackBars();   
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: 5),
+        content: Text("Expense Deleted."),
+        action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              setState(() {
+                _registereExpenses.insert(expenseIndex, expense);
+              });
+            }),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    Widget maincontent = Center(
+      child: Text("No Expense found! Start adding some..."),
+    );
+
+    if (_registereExpenses.isNotEmpty) {
+      maincontent = ExpensesList(
+        expenses: _registereExpenses,
+        onremove: removeExpense,
+      );
+    }
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddExpenseOverlay,
@@ -49,7 +89,7 @@ class _ExpensesState extends State<Expenses> {
       ),
       body: Column(children: [
         Text("Chart..."),
-        Expanded(child: ExpensesList(expenses: _registereExpenses)),
+        Expanded(child: maincontent),
       ]),
     );
   }
